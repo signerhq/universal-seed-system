@@ -614,7 +614,7 @@ All icons are available as **PNG** (256×256, transparent background) in `visual
 </details>
 
 <details>
-<summary><b>Insects</b> &nbsp;·&nbsp; <code>56 – 62</code></summary>
+<summary><b>Bugs & Crawlers</b> &nbsp;·&nbsp; <code>56 – 62</code></summary>
 <br>
 
 | Index | Icon | Word | | Index | Icon | Word |
@@ -634,7 +634,7 @@ All icons are available as **PNG** (256×256, transparent background) in `visual
 |:---:|:---:|---|---|:---:|:---:|---|
 | 63 | :sunny: | sun | | 71 | :rainbow: | rainbow |
 | 64 | :crescent_moon: | moon | | 72 | :dash: | wind |
-| 65 | :star: | star | | 73 | :thunder_cloud_and_rain: | thunder |
+| 65 | :star: | star | | 73 | :zap: | thunder |
 | 66 | :earth_africa: | earth | | 74 | :volcano: | volcano |
 | 67 | :fire: | fire | | 75 | :tornado: | tornado |
 | 68 | :droplet: | water | | 76 | :comet: | comet |
@@ -656,7 +656,7 @@ All icons are available as **PNG** (256×256, transparent background) in `visual
 </details>
 
 <details>
-<summary><b>Plants</b> &nbsp;·&nbsp; <code>85 – 90</code></summary>
+<summary><b>Plants & Fungi</b> &nbsp;·&nbsp; <code>85 – 90</code></summary>
 <br>
 
 | Index | Icon | Word | | Index | Icon | Word |
@@ -710,13 +710,13 @@ All icons are available as **PNG** (256×256, transparent background) in `visual
 </details>
 
 <details>
-<summary><b>Drinks</b> &nbsp;·&nbsp; <code>121 – 128</code></summary>
+<summary><b>Food & Drink</b> &nbsp;·&nbsp; <code>121 – 128</code></summary>
 <br>
 
 | Index | Icon | Word | | Index | Icon | Word |
 |:---:|:---:|---|---|:---:|:---:|---|
 | 121 | :honey_pot: | honey | | 125 | :wine_glass: | wine |
-| 122 | :glass_of_milk: | milk | | 126 | :beer: | beer |
+| 122 | :milk_glass: | milk | | 126 | :beer: | beer |
 | 123 | :coffee: | coffee | | 127 | :beverage_box: | juice |
 | 124 | :tea: | tea | | 128 | :salt: | salt |
 
@@ -730,7 +730,7 @@ All icons are available as **PNG** (256×256, transparent background) in `visual
 |:---:|:---:|---|---|:---:|:---:|---|
 | 129 | :fork_and_knife: | fork | | 133 | :sake: | bottle |
 | 130 | :spoon: | spoon | | 134 | :ramen: | soup |
-| 131 | :bowl_with_spoon: | bowl | | 135 | :cooking: | pan |
+| 131 | :bowl_with_spoon: | bowl | | 135 | :fried_egg: | pan |
 | 132 | :hocho: | knife | | | | |
 
 </details>
