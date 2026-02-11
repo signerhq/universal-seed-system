@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QSize, QEvent, QPoint, QRect, Signal, QTimer
 from PySide6.QtGui import QPixmap, QIcon, QPainter, QPainterPath, QCursor
 
-from seed import generate_words, get_fingerprint, get_private_key, get_entropy_bits, mouse_entropy, resolve, search, verify_randomness, get_languages
+from seed import generate_words, get_fingerprint, get_private_key, get_entropy_bits, mouse_entropy, resolve, search, verify_randomness, get_languages, verify_checksum
 from languages.base import signer_universal_seed_base
 
 ICONS_DIR = os.path.join(PROJECT_DIR, "visuals", "png")
@@ -1305,6 +1305,30 @@ class SeedTestWindow(QMainWindow):
             # Capture base indexes when seed first completes
             if self._base_indexes is None:
                 self._base_indexes = list(indexes)
+            # Verify checksum before proceeding
+            if not verify_checksum(indexes):
+                self.count_label.setStyleSheet(
+                    "color: #c0392b; font-size: 14px; font-weight: 700;"
+                    " border: none; background: none;"
+                )
+                self.hint_label.setText("checksum failed")
+                self.hint_label.setStyleSheet(
+                    "color: #c0392b; font-size: 12px; font-weight: 600;"
+                    " border: none; background: none;"
+                )
+                self.bits_label.setText("")
+                self.fp_label.setText("--------")
+                self.fp_label.setStyleSheet(
+                    "color: #c0392b; font-size: 15px; font-weight: 700;"
+                    " font-family: monospace; letter-spacing: 3px;"
+                    " border: none; background: none;"
+                )
+                self.status_frame.setStyleSheet(
+                    "QFrame { background: #fdf0ef; border: 1px solid #e0b0b0;"
+                    " border-radius: 10px; }"
+                )
+                self.key_label.setText("")
+                return
             pp = self.passphrase_input.text()
             # Fast fingerprint (HMAC only, no passphrase — instant)
             fp = get_fingerprint(indexes)
