@@ -118,6 +118,16 @@ with open(_LOOKUP_FILE, "r", encoding="utf-8") as _f:
 _SORTED_KEYS = sorted(_LOOKUP.keys())
 _INDEX_TO_BASE = _BASE  # index -> base English word
 
+# Inner-word index for multi-word entries (e.g. "bàn tay" → searchable by "tay")
+_INNER_WORDS = []  # sorted list of (inner_word, full_key)
+for _k in _LOOKUP:
+    _parts = _k.split()
+    if len(_parts) > 1:
+        for _p in _parts[1:]:
+            _INNER_WORDS.append((_p, _k))
+_INNER_WORDS.sort()
+_INNER_WORD_KEYS = [_iw for _iw, _ in _INNER_WORDS]
+
 DEBUG = False
 
 # Zero-width and invisible characters to strip
@@ -125,6 +135,12 @@ _INVISIBLE_CHARS = re.compile(
     "[\u200b\u200c\u200d\u200e\u200f\u00ad\u034f\u061c"
     "\ufeff\u2060\u2061\u2062\u2063\u2064\u180e]"
 )
+
+# Definite-article suffixes for Latin-script languages (longest first)
+# Icelandic: -inn (masc), -in (fem), -ið (neut)
+# Romanian:  -ul (masc), -le (masc after vowels)
+# Norwegian/Danish: -en (common), -et (neuter), -a (fem, Norwegian)
+_ARTICLE_SUFFIXES = ("inn", "ið", "ul", "in", "le", "en", "et", "a")
 
 # Scripts where stripping combining marks is safe
 _SAFE_STRIP_SCRIPTS = {"latin", "greek", "arabic", "hebrew", "cyrillic"}
@@ -227,8 +243,47 @@ def _resolve_one(word):
     stripped = _strip_diacritics(key)
     if stripped != key:
         result = _LOOKUP.get(stripped)
-        if DEBUG: print(f"  [resolve] diacritic-stripped '{stripped}' ->{result}  ({(time.perf_counter()-t0)*1000:.2f}ms)")
-        return result
+        if result is not None:
+            if DEBUG: print(f"  [resolve] diacritic-stripped '{stripped}' ->{result}  ({(time.perf_counter()-t0)*1000:.2f}ms)")
+            return result
+
+    # Fallback: strip Arabic definite article "ال" (al-) prefix
+    candidate = stripped if stripped != key else key
+    if candidate.startswith("\u0627\u0644"):
+        bare = candidate[2:]
+        result = _LOOKUP.get(bare)
+        if result is not None:
+            if DEBUG: print(f"  [resolve] Arabic al- stripped '{bare}' ->{result}  ({(time.perf_counter()-t0)*1000:.2f}ms)")
+            return result
+
+    # Fallback: strip Hebrew definite article "ה" (ha-) prefix
+    if candidate.startswith("\u05d4"):
+        bare = candidate[1:]
+        result = _LOOKUP.get(bare)
+        if result is not None:
+            if DEBUG: print(f"  [resolve] Hebrew ha- stripped '{bare}' ->{result}  ({(time.perf_counter()-t0)*1000:.2f}ms)")
+            return result
+
+    # Fallback: strip French/Italian "l'" article contraction
+    for apo in ("'", "\u2019", "\u02bc"):
+        prefix = "l" + apo
+        if candidate.startswith(prefix):
+            bare = candidate[len(prefix):]
+            result = _LOOKUP.get(bare)
+            if result is not None:
+                if DEBUG: print(f"  [resolve] l' stripped '{bare}' ->{result}  ({(time.perf_counter()-t0)*1000:.2f}ms)")
+                return result
+            break
+
+    # Fallback: strip definite-article suffixes (Scandinavian, Romanian, Icelandic)
+    if _detect_script(candidate) == "latin" and len(candidate) > 3:
+        for suffix in _ARTICLE_SUFFIXES:
+            if candidate.endswith(suffix) and len(candidate) - len(suffix) >= 2:
+                bare = candidate[:-len(suffix)]
+                result = _LOOKUP.get(bare)
+                if result is not None:
+                    if DEBUG: print(f"  [resolve] suffix-stripped '{bare}' (removed -{suffix}) ->{result}  ({(time.perf_counter()-t0)*1000:.2f}ms)")
+                    return result
 
     if DEBUG: print(f"  [resolve] no match for '{key}'  ({(time.perf_counter()-t0)*1000:.2f}ms)")
     return None
@@ -263,6 +318,40 @@ def resolve(words):
         else:
             errors.append((i, word))
     return indexes, errors
+
+
+def _strip_article_prefix(key):
+    """Strip definite article prefixes for search. Returns stripped key or None."""
+    # French/Italian l' contraction
+    for apo in ("'", "\u2019", "\u02bc"):
+        prefix = "l" + apo
+        if key.startswith(prefix):
+            return key[len(prefix):]
+    # Arabic ال
+    if key.startswith("\u0627\u0644"):
+        return key[2:]
+    # Hebrew ה
+    if key.startswith("\u05d4") and len(key) > 1:
+        return key[1:]
+    return None
+
+
+def _search_sorted(sorted_keys, lookup, key, limit, seen_indexes):
+    """Binary-search sorted_keys for entries starting with key."""
+    lo = bisect.bisect_left(sorted_keys, key)
+    results = []
+    for i in range(lo, len(sorted_keys)):
+        if len(results) >= limit:
+            break
+        k = sorted_keys[i]
+        if not k.startswith(key):
+            break
+        idx = lookup[k]
+        if idx in seen_indexes:
+            continue
+        seen_indexes.add(idx)
+        results.append((k, idx))
+    return results
 
 
 def search(prefix, limit=10):
@@ -301,26 +390,39 @@ def search(prefix, limit=10):
     if len(english_first) > limit:
         english_first = english_first[:limit]
 
-    # Binary search for the first key >= prefix
-    lo = bisect.bisect_left(_SORTED_KEYS, key)
-
     results = list(english_first)
-    scanned = 0
-    for i in range(lo, len(_SORTED_KEYS)):
-        if len(results) >= limit:
-            break
-        k = _SORTED_KEYS[i]
-        if not k.startswith(key):
-            break
-        scanned += 1
-        idx = _LOOKUP[k]
-        if idx in seen_indexes:
-            continue
-        seen_indexes.add(idx)
-        results.append((k, idx))
+    remaining = limit - len(results)
+
+    # Primary: binary search on full keys
+    results += _search_sorted(_SORTED_KEYS, _LOOKUP, key, remaining, seen_indexes)
+    remaining = limit - len(results)
+
+    # Article prefix stripping (l'oeil → oeil, الأيدي → أيدي, etc.)
+    if remaining > 0:
+        alt_key = _strip_article_prefix(key)
+        if alt_key:
+            results += _search_sorted(_SORTED_KEYS, _LOOKUP, alt_key, remaining, seen_indexes)
+            remaining = limit - len(results)
+
+    # Inner-word matching for multi-word entries (e.g. "tay" finds "bàn tay")
+    if remaining > 0:
+        lo = bisect.bisect_left(_INNER_WORD_KEYS, key)
+        for i in range(lo, len(_INNER_WORD_KEYS)):
+            if remaining <= 0:
+                break
+            iw = _INNER_WORD_KEYS[i]
+            if not iw.startswith(key):
+                break
+            full_key = _INNER_WORDS[i][1]
+            idx = _LOOKUP[full_key]
+            if idx in seen_indexes:
+                continue
+            seen_indexes.add(idx)
+            results.append((full_key, idx))
+            remaining -= 1
 
     elapsed = (time.perf_counter() - t0) * 1000
-    if DEBUG: print(f"  [search] prefix='{key}' ->{len(results)} unique results (scanned {scanned})  ({elapsed:.2f}ms)")
+    if DEBUG: print(f"  [search] prefix='{key}' ->{len(results)} unique results  ({elapsed:.2f}ms)")
     return results
 
 

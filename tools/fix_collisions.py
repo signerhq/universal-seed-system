@@ -349,7 +349,7 @@ def main():
         write_language_file(lang_file, languages[lang_file])
         print(f"  Wrote {lang_file}.py")
 
-    print("\nDone! Run compile_lookup.py to verify zero collisions.")
+    print("\nDone! Run compile.py to verify zero collisions.")
 
 
 if __name__ == "__main__":
