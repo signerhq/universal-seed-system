@@ -339,11 +339,19 @@ No other dependencies required. `seed.py` uses only Python standard library plus
 ### Quick Start
 
 ```python
-from seed import generate_words, get_private_key, get_fingerprint, get_entropy_bits
+from seed import generate_words, get_private_key, get_fingerprint, get_entropy_bits, get_languages
 
 # Generate a 32-word seed (256-bit entropy)
 seed = generate_words(32)
 # → [(15, "dog"), (63, "sun"), (136, "key"), ...]
+
+# Generate in a specific language
+seed = generate_words(32, language="french")
+# → [(15, "chien"), (63, "soleil"), (136, "clé"), ...]
+
+# List available languages
+get_languages()
+# → [("english", "English"), ("arabic", "العربية"), ("french", "Français"), ...]
 
 # Derive a key — pass the seed directly
 key = get_private_key(seed)                # 64 bytes
@@ -450,7 +458,7 @@ print(kdf_info())
 
 | Function | Signature | Returns |
 |:---|:---|:---|
-| `generate_words` | `generate_words(word_count=32, extra_entropy=None)` | `list[(int, str)]` — index/word pairs |
+| `generate_words` | `generate_words(word_count=32, extra_entropy=None, language=None)` | `list[(int, str)]` — index/word pairs |
 | `get_private_key` | `get_private_key(seed, passphrase="")` | `bytes` — 64-byte master key |
 | `get_fingerprint` | `get_fingerprint(seed, passphrase="")` | `str` — 4-char hex ("A3F1") |
 | `get_entropy_bits` | `get_entropy_bits(word_count, passphrase="")` | `float` — estimated total entropy |
@@ -458,6 +466,7 @@ print(kdf_info())
 | `search` | `search(prefix, limit=10)` | `list[(str, int)]` — word/index pairs |
 | `verify_randomness` | `verify_randomness(sample_bytes=None, sample_size=2048, num_samples=5)` | `dict` — `{"pass": bool, "tests": [...], "summary": str}` |
 | `mouse_entropy` | class | Entropy collection pool |
+| `get_languages` | `get_languages()` | `list[(str, str)]` — (code, label) pairs |
 | `kdf_info` | `kdf_info()` | `str` — chained KDF pipeline description |
 
 <br>
@@ -909,7 +918,7 @@ All icons are available as **PNG** (256×256, transparent background) in `visual
 
 ## Word Lookup System
 
-All 42 language word lists plus emoji characters are compiled into a single flat hash table (`words.json`) for **instant** word resolution. Everything is in one file — `seed.py`.
+All 42 language word lists plus emoji characters are compiled into a single file (`words.json`) containing a flat hash table for **instant** word resolution and embedded language maps for generation in any language. Everything is in one file — `seed.py`.
 
 <br>
 
@@ -961,9 +970,9 @@ Smart per-script handling — marks are only stripped where it's safe:
 | Total lookup keys | **38,730** across 42 languages + emoji |
 | Avg words per position | **3.5** |
 | Max word length (shortest per index) | **7 chars** across all languages |
-| Languages with 0 single-word indexes | **37** of 42 |
+| Languages with 0 single-word indexes | **36** of 42 |
 | Cross-language collisions | **0** |
-| File size (words.json) | **602 KB** |
+| File size (words.json) | **783 KB** |
 
 <br>
 
