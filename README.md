@@ -121,7 +121,6 @@ The system supports two entropy configurations:
 | RSA 2048 | ~112-bit | Standard key exchange |
 | AES-128 | 128-bit | High security baseline |
 | Bitcoin (BIP-39, 12 words) | 128-bit | Industry standard for most wallets |
-| **Universal Seed (24 words)** | **176-bit** | **Stronger than any symmetric cipher in common use** |
 | Bitcoin (BIP-39, 24 words) | 256-bit | Higher security industry standard |
 | AES-256 | 256-bit | Military grade |
 | **Universal Seed (36 words)** | **272-bit** | **Beyond military grade** |
