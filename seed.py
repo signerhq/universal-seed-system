@@ -118,6 +118,8 @@ with open(_LOOKUP_FILE, "r", encoding="utf-8") as _f:
 _SORTED_KEYS = sorted(_LOOKUP.keys())
 _INDEX_TO_BASE = _BASE  # index -> base English word
 
+DEBUG = False
+
 # Zero-width and invisible characters to strip
 _INVISIBLE_CHARS = re.compile(
     "[\u200b\u200c\u200d\u200e\u200f\u00ad\u034f\u061c"
@@ -205,12 +207,12 @@ def _resolve_one(word):
     if key.isdigit():
         n = int(key)
         if 0 <= n <= 255:
-            print(f"  [resolve] numeric index {n}  ({(time.perf_counter()-t0)*1000:.2f}ms)")
+            if DEBUG: print(f"  [resolve] numeric index {n}  ({(time.perf_counter()-t0)*1000:.2f}ms)")
             return n
 
     result = _LOOKUP.get(key)
     if result is not None:
-        print(f"  [resolve] exact match '{key}' ->{result}  ({(time.perf_counter()-t0)*1000:.2f}ms)")
+        if DEBUG: print(f"  [resolve] exact match '{key}' ->{result}  ({(time.perf_counter()-t0)*1000:.2f}ms)")
         return result
 
     # Try emoji-normalized (strip variation selectors)
@@ -218,17 +220,17 @@ def _resolve_one(word):
     if e_key and e_key != key:
         result = _LOOKUP.get(e_key)
         if result is not None:
-            print(f"  [resolve] emoji match '{e_key}' ->{result}  ({(time.perf_counter()-t0)*1000:.2f}ms)")
+            if DEBUG: print(f"  [resolve] emoji match '{e_key}' ->{result}  ({(time.perf_counter()-t0)*1000:.2f}ms)")
             return result
 
     # Fallback: try diacritic-stripped version
     stripped = _strip_diacritics(key)
     if stripped != key:
         result = _LOOKUP.get(stripped)
-        print(f"  [resolve] diacritic-stripped '{stripped}' ->{result}  ({(time.perf_counter()-t0)*1000:.2f}ms)")
+        if DEBUG: print(f"  [resolve] diacritic-stripped '{stripped}' ->{result}  ({(time.perf_counter()-t0)*1000:.2f}ms)")
         return result
 
-    print(f"  [resolve] no match for '{key}'  ({(time.perf_counter()-t0)*1000:.2f}ms)")
+    if DEBUG: print(f"  [resolve] no match for '{key}'  ({(time.perf_counter()-t0)*1000:.2f}ms)")
     return None
 
 
@@ -285,7 +287,7 @@ def search(prefix, limit=10):
                 if len(results) >= limit:
                     break
         elapsed = (time.perf_counter() - t0) * 1000
-        print(f"  [search] numeric prefix='{key}' ->{len(results)} results  ({elapsed:.2f}ms)")
+        if DEBUG: print(f"  [search] numeric prefix='{key}' ->{len(results)} results  ({elapsed:.2f}ms)")
         return results
 
     # Collect English base words that match the prefix first
@@ -318,7 +320,7 @@ def search(prefix, limit=10):
         results.append((k, idx))
 
     elapsed = (time.perf_counter() - t0) * 1000
-    print(f"  [search] prefix='{key}' ->{len(results)} unique results (scanned {scanned})  ({elapsed:.2f}ms)")
+    if DEBUG: print(f"  [search] prefix='{key}' ->{len(results)} unique results (scanned {scanned})  ({elapsed:.2f}ms)")
     return results
 
 
