@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QSize, QEvent, QPoint, QRect, Signal, QTimer
 from PySide6.QtGui import QPixmap, QIcon, QPainter, QPainterPath, QCursor
 
-from seed import generate_words, get_fingerprint, get_private_key, get_entropy_bits, mouse_entropy, resolve, search, verify_randomness, get_languages, verify_checksum
+from seed import generate_words, get_fingerprint, get_private_key, get_entropy_bits, mouse_entropy, resolve, search, verify_randomness, get_languages, verify_checksum, get_profile
 from languages.base import signer_universal_seed_base
 
 ICONS_DIR = os.path.join(PROJECT_DIR, "visuals", "png")
@@ -695,6 +695,8 @@ class SeedTestWindow(QMainWindow):
         self._key_version = 0  # Tracks async key derivation freshness
         self._key_deriving = False  # True while a thread is running
         self._full_key_hex = ""  # Full derived key hex for copy
+        self._master_key_bytes = None  # Raw master key for profile derivation
+        self._full_profile_key_hex = ""  # Full profile key hex for copy
         self._key_ready.connect(self._on_key_ready)
         self._key_timer = QTimer()
         self._key_timer.setSingleShot(True)
@@ -1027,6 +1029,70 @@ class SeedTestWindow(QMainWindow):
         key_row.addStretch()
         main_layout.addLayout(key_row)
 
+        # Profile password — compact inline row: [profile:] [input] [Show] [key...key] [Copy]
+        self.profile_row_widget = QWidget()
+        self.profile_row_widget.setStyleSheet("background: transparent;")
+        self.profile_row_widget.hide()
+        profile_row = QHBoxLayout(self.profile_row_widget)
+        profile_row.setContentsMargins(0, 0, 0, 0)
+        profile_row.setSpacing(4)
+        profile_row.addStretch()
+
+        self.profile_prefix = QLabel("hidden profile:")
+        self.profile_prefix.setStyleSheet(
+            "color: #9898a8; font-size: 10px; font-family: monospace;"
+            " background: none;"
+        )
+        profile_row.addWidget(self.profile_prefix)
+
+        self.profile_input = QLineEdit()
+        self.profile_input.setPlaceholderText("password")
+        self.profile_input.setEchoMode(QLineEdit.Password)
+        self.profile_input.setFixedSize(100, 18)
+        self.profile_input.setStyleSheet(
+            "QLineEdit { background: #f0f0f5; color: #2c2c3a; border: 1px solid #e4e4ec;"
+            " border-radius: 6px; font-size: 10px; font-family: monospace;"
+            " padding: 0 4px; selection-background-color: #c0c8e0; }"
+            "QLineEdit:focus { border-color: #c0c0d0; background: #ffffff; }"
+        )
+        profile_row.addWidget(self.profile_input)
+
+        self.profile_toggle = QPushButton("Show")
+        self.profile_toggle.setFixedSize(34, 18)
+        self.profile_toggle.setCursor(Qt.PointingHandCursor)
+        self.profile_toggle.setStyleSheet(
+            "QPushButton { background: #e8e8f0; color: #6a6a80; border: none;"
+            " border-radius: 6px; font-size: 9px; font-weight: 500; }"
+            "QPushButton:hover { background: #dcdce8; }"
+        )
+        self.profile_toggle.clicked.connect(self._toggle_profile)
+        profile_row.addWidget(self.profile_toggle)
+
+        self.profile_key_label = QLabel("")
+        self.profile_key_label.setStyleSheet(
+            "color: #9898a8; font-size: 10px; font-family: monospace;"
+            " background: none; padding: 2px 0;"
+        )
+        self.profile_key_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        profile_row.addWidget(self.profile_key_label)
+
+        self.profile_key_copy_btn = QPushButton("Copy")
+        self.profile_key_copy_btn.setFixedSize(40, 18)
+        self.profile_key_copy_btn.setCursor(Qt.PointingHandCursor)
+        self.profile_key_copy_btn.setStyleSheet(
+            "QPushButton { background: #e8e8f0; color: #6a6a80; border: none;"
+            " border-radius: 6px; font-size: 9px; font-weight: 500; }"
+            "QPushButton:hover { background: #dcdce8; }"
+        )
+        self.profile_key_copy_btn.clicked.connect(self._copy_profile_key)
+        self.profile_key_copy_btn.hide()
+        profile_row.addWidget(self.profile_key_copy_btn)
+
+        profile_row.addStretch()
+
+        self.profile_input.textChanged.connect(self._on_profile_changed)
+        main_layout.addWidget(self.profile_row_widget)
+
         # Verify randomness button (bottom-left)
         bottom_row = QHBoxLayout()
         bottom_row.setContentsMargins(0, 0, 0, 0)
@@ -1115,9 +1181,11 @@ class SeedTestWindow(QMainWindow):
     def _clear_all(self):
         """Clear all rows and reset state."""
         self._base_indexes = None
+        self._master_key_bytes = None
         for row in self.rows:
             row.clear()
         self.passphrase_input.clear()
+        self.profile_input.clear()
         self._update_status()
 
     # ── passphrase toggle ──────────────────────────────────
@@ -1328,6 +1396,7 @@ class SeedTestWindow(QMainWindow):
                     " border-radius: 10px; }"
                 )
                 self.key_label.setText("")
+                self.profile_row_widget.hide()
                 return
             pp = self.passphrase_input.text()
             # Fast fingerprint (HMAC only, no passphrase — instant)
@@ -1396,6 +1465,11 @@ class SeedTestWindow(QMainWindow):
             self.key_prefix.hide()
             self.key_copy_btn.hide()
             self._full_key_hex = ""
+            self._master_key_bytes = None
+            self.profile_row_widget.hide()
+            self.profile_key_label.setText("")
+            self.profile_key_copy_btn.hide()
+            self._full_profile_key_hex = ""
 
     def _start_key_derivation(self):
         """Spawn one background thread for key derivation (debounced)."""
@@ -1419,6 +1493,7 @@ class SeedTestWindow(QMainWindow):
     def _on_key_ready(self, key_hex, fp):
         """Called from signal when background key derivation completes."""
         self._full_key_hex = key_hex
+        self._master_key_bytes = bytes.fromhex(key_hex)
         self.key_label.setText(f"{key_hex[:16]}...{key_hex[-16:]}")
         self.key_label.setStyleSheet(
             "color: #6a6a80; font-size: 10px; font-family: monospace;"
@@ -1427,6 +1502,44 @@ class SeedTestWindow(QMainWindow):
         self.key_prefix.show()
         self.key_copy_btn.show()
         self.fp_label.setText(fp)
+        self.profile_row_widget.show()
+        self._update_profile_key()
+
+    # ── profile handling ──────────────────────────────────
+    def _toggle_profile(self):
+        if self.profile_input.echoMode() == QLineEdit.Password:
+            self.profile_input.setEchoMode(QLineEdit.Normal)
+            self.profile_toggle.setText("Hide")
+        else:
+            self.profile_input.setEchoMode(QLineEdit.Password)
+            self.profile_toggle.setText("Show")
+
+    def _on_profile_changed(self):
+        self._update_profile_key()
+
+    def _update_profile_key(self):
+        """Derive and display profile key if master key and profile password exist."""
+        pw = self.profile_input.text()
+        if not pw or self._master_key_bytes is None:
+            self.profile_key_label.setText("")
+            self.profile_key_copy_btn.hide()
+            self._full_profile_key_hex = ""
+            return
+        profile_key = get_profile(self._master_key_bytes, pw)
+        self._full_profile_key_hex = profile_key.hex()
+        self.profile_key_label.setText(
+            f"{self._full_profile_key_hex[:16]}...{self._full_profile_key_hex[-16:]}"
+        )
+        self.profile_key_label.setStyleSheet(
+            "color: #6a6a80; font-size: 10px; font-family: monospace;"
+            " background: none; padding: 2px 0;"
+        )
+        self.profile_key_copy_btn.show()
+
+    def _copy_profile_key(self):
+        if self._full_profile_key_hex:
+            QApplication.clipboard().setText(self._full_profile_key_hex)
+            self._flash_copied(self.profile_key_copy_btn)
 
     def _hide_all_popups(self, reason="unknown"):
         print(f"  [window._hide_all_popups] reason={reason}")
