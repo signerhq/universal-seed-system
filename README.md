@@ -53,7 +53,7 @@ The Universal Seed System takes a fundamentally different approach:
 |---|:---:|:---:|
 | Words per position | 1 | **Multiple** (synonyms, slang, abbreviations) |
 | Languages | 10 | **42** |
-| Visual recovery | :x: | :white_check_mark: **Select 36 icons directly** |
+| Visual recovery | :x: | :white_check_mark: **Select icons directly** |
 | Checksum | 4–8 bit | :white_check_mark: **16-bit** |
 | Paper backup recognizable as crypto? | :warning: Yes | :shield: **No** — looks like random notes |
 | Mixed-language backup | :x: | :white_check_mark: Write in any combination |
@@ -122,6 +122,7 @@ The system supports two entropy configurations:
 | AES-128 | 128-bit | High security baseline |
 | Bitcoin (BIP-39, 12 words) | 128-bit | Industry standard for most wallets |
 | **Universal Seed (24 words)** | **176-bit** | **Stronger than any symmetric cipher in common use** |
+| Bitcoin (BIP-39, 24 words) | 256-bit | Higher security industry standard |
 | AES-256 | 256-bit | Military grade |
 | **Universal Seed (36 words)** | **272-bit** | **Beyond military grade** |
 | **Universal Seed + passphrase** | **272+ bits** | **Second factor expands the keyspace further** |
