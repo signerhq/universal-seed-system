@@ -198,7 +198,40 @@ The final output is **64 bytes (512 bits)** of key material:
 
 ---
 
-## 7. Fingerprint
+## 7. Profile Derivation
+
+The master key can derive unlimited independent **profile keys** using profile passwords.
+Each password produces a completely unrelated key. Without the password, a profile's
+existence cannot be detected (plausible deniability).
+
+```python
+def get_profile(master_key, profile_password):
+    if not profile_password:
+        return master_key  # empty = default profile
+    payload = b"universal-seed-v2-profile" + profile_password.encode("utf-8")
+    return HMAC-SHA512(key=master_key, message=payload)
+```
+
+| Property | Value |
+|:---|:---|
+| Algorithm | HMAC-SHA512 |
+| Key | master key (64 bytes from KDF pipeline) |
+| Message | `b"universal-seed-v2-profile"` + password UTF-8 bytes |
+| Output | 64 bytes (512 bits) |
+| Empty password | Returns master key unchanged (default profile) |
+| Speed | Instant (single HMAC, no KDF) |
+
+### Properties
+
+- **Deterministic** — same master key + same password always produces the same profile key
+- **Independent** — profiles cannot be derived from each other
+- **Hidden** — no way to enumerate how many profiles exist
+- **Plausible deniability** — under duress, reveal only the default profile
+- **No limit** — unlimited profiles from a single master key
+
+---
+
+## 8. Fingerprint
 
 **Without passphrase** (instant):
 ```python
@@ -221,7 +254,7 @@ fingerprint = key[0:4].hex().upper()
 
 ---
 
-## 8. Word Resolution
+## 9. Word Resolution
 
 ### Strict Mode (used in key derivation)
 
@@ -244,7 +277,7 @@ Fuzzy mode is for user convenience during recovery. The checksum catches any mis
 
 ---
 
-## 9. Security Notes
+## 10. Security Notes
 
 ### Protected against
 - Brute-force (272-bit entropy + chained KDF)
@@ -269,7 +302,7 @@ Fuzzy mode is for user convenience during recovery. The checksum catches any mis
 
 ---
 
-## 10. Verification Signals
+## 11. Verification Signals
 
 v2 provides two independent verification signals:
 
@@ -282,7 +315,7 @@ Both MUST be specified and implemented. The fingerprint changes with passphrase;
 
 ---
 
-## 11. Compatibility
+## 12. Compatibility
 
 ### v1 and v2 are fully independent
 

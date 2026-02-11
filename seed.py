@@ -35,10 +35,11 @@ Sources (8 independent classes):
     7. Hardware RNG          — BCryptGenRandom / platform HWRNG (RDRAND/RDSEED)
 
 Usage:
-    from seed import generate_words, get_private_key, get_fingerprint, resolve, search
+    from seed import generate_words, get_private_key, get_profile, get_fingerprint, resolve, search
     seed = generate_words(36)                       # [(idx, "word"), ...] — 34 random + 2 checksum
     key  = get_private_key(seed)                    # 64 bytes — pass seed directly
     key  = get_private_key(seed, "passphrase")      # with passphrase (second factor)
+    prof = get_profile(key, "personal")             # hidden profile — independent 64-byte key
     fp   = get_fingerprint(seed)                    # "A3F1B2C4" visual fingerprint
     idx   = resolve("dog")                          # 15
     idxs, errs = resolve(["dog", "sun", "key"])     # ([15, 63, 136], [])
@@ -937,6 +938,31 @@ def get_private_key(seed, passphrase=""):
 
     # Step 5: HKDF-Expand — derive output key with domain separation
     return _hkdf_expand(stretched, _DOMAIN + b"-master", 64)
+
+
+def get_profile(master_key, profile_password):
+    """Derive a profile-specific key from a master key.
+
+    Allows multiple independent accounts from a single seed. Each profile
+    password produces a completely unrelated 64-byte key. Without the
+    password, the profile's existence cannot be detected (plausible
+    deniability).
+
+    The derivation is a single HMAC-SHA512 — instant, no KDF needed
+    since the master key is already hardened.
+
+    Args:
+        master_key: 64-byte master key from get_private_key().
+        profile_password: Profile password string. Empty string returns
+            master_key unchanged (default profile).
+
+    Returns:
+        64 bytes of profile-specific key material.
+    """
+    if not profile_password:
+        return master_key
+    payload = _DOMAIN + b"-profile" + profile_password.encode("utf-8")
+    return hmac.new(master_key, payload, hashlib.sha512).digest()
 
 
 def get_fingerprint(seed, passphrase=""):

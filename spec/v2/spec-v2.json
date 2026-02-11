@@ -116,6 +116,16 @@
     "fuzzy_note": "Fuzzy fallbacks are available in resolve(strict=False) for UI/recovery only"
   },
 
+  "profile_derivation": {
+    "algorithm": "HMAC-SHA512",
+    "key": "master key (64 bytes from KDF pipeline)",
+    "message_prefix": "universal-seed-v2-profile",
+    "message": "prefix + profile_password.encode('utf-8')",
+    "output_bytes": 64,
+    "empty_password": "returns master key unchanged (default profile)",
+    "properties": ["deterministic", "independent", "hidden", "unlimited"]
+  },
+
   "compatibility": {
     "v1_domain_separator": "universal-seed-v1 (different from v2)",
     "v1_kdf_pipeline": "different — v2 uses universal-seed-v2 domain, producing different keys",

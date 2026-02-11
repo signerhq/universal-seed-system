@@ -88,6 +88,20 @@ fp = get_fingerprint(indexes, "your passphrase here")
 
 Compare the displayed fingerprint (8 hex chars, e.g. `"A3F1B2C4"`) with what you recorded. If they match, the recovery is correct.
 
+### Step 6: Recover hidden profiles (if any)
+
+If you used profile passwords to create hidden accounts:
+
+```python
+from seed import get_profile
+
+# Derive each profile key using its password
+personal = get_profile(key, "personal")
+business = get_profile(key, "business")
+```
+
+Each profile password produces the same independent key it always did. Without the password, a profile cannot be discovered.
+
 ---
 
 ## Manual Recovery (No seed.py)
@@ -159,6 +173,11 @@ for pos, idx in enumerate(data_indexes):
     fp_payload += struct.pack("<BB", pos, idx)
 fp_key = hmac.new(DOMAIN, fp_payload, hashlib.sha512).digest()
 print(f"Fingerprint: {fp_key[:4].hex().upper()}")
+
+# Profile derivation (if you used hidden profiles):
+profile_password = "personal"  # your profile password
+profile_key = hmac.new(master_key, DOMAIN + b"-profile" + profile_password.encode("utf-8"), hashlib.sha512).digest()
+print(f"Profile key: {profile_key.hex()}")
 ```
 
 ---

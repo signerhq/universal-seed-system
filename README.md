@@ -61,6 +61,7 @@ The Universal Seed System takes a fundamentally different approach:
 | Emoji input | :x: | :white_check_mark: Paste :dog2: :sunny: :key: directly |
 | Key stretching | PBKDF2 | **PBKDF2 + Argon2id** (chained, defense in depth) |
 | Passphrase support | :white_check_mark: | :white_check_mark: **Second factor** — same seed + different passphrase = unrelated keys |
+| Multiple accounts per seed | :x: One seed = one wallet | :white_check_mark: **Unlimited hidden profiles** — one seed, many accounts |
 
 <br>
 
@@ -331,6 +332,42 @@ Passphrase entropy is estimated from the character set used:
 
 <br>
 
+## Hidden Profiles — Multiple Accounts, One Seed
+
+Hidden profiles let you derive **unlimited independent keys** from a single master key using profile passwords. Each profile password produces a completely unrelated key — and without the password, no one can detect that the profile exists.
+
+```
+Seed → Master Key (expensive KDF — runs once)
+  ├── default (no password) = master key
+  ├── "personal"  → independent 64-byte key
+  ├── "business"  → independent 64-byte key
+  └── "savings"   → independent 64-byte key
+```
+
+```python
+from seed import get_private_key, get_profile
+
+master = get_private_key(seed)
+
+personal = get_profile(master, "personal")    # independent key
+business = get_profile(master, "business")    # completely unrelated
+savings  = get_profile(master, "savings")     # each password = new account
+default  = get_profile(master, "")            # empty = master key itself
+```
+
+| Property | Detail |
+|:---|:---|
+| Algorithm | HMAC-SHA512(master_key, domain + password) |
+| Speed | Instant — single HMAC, no KDF (master key is already hardened) |
+| Deterministic | Same password always produces the same key |
+| Independent | Profiles cannot be derived from each other |
+| Hidden | No way to enumerate how many profiles exist |
+| Plausible deniability | Under duress, reveal only the default profile |
+
+**Why this matters:** With BIP-39, one seed = one wallet. To manage multiple accounts you need multiple seeds. With the Universal Seed System, one seed + profile passwords = unlimited independent wallets, all hidden behind a single backup.
+
+<br>
+
 ## Using seed.py in Python
 
 Everything lives in a single file — `seed.py`. Import it and you get seed generation, key derivation, word lookup, and entropy estimation.
@@ -369,6 +406,11 @@ verify_checksum(seed)                      # True
 
 # With a passphrase (second factor — same seed, different passphrase = different key)
 key = get_private_key(seed, "my secret passphrase")
+
+# Hidden profiles — multiple accounts from one seed
+from seed import get_profile
+personal = get_profile(key, "personal")       # independent 64-byte key
+business = get_profile(key, "business")       # completely unrelated key
 
 # Also accepts plain words or raw indexes (must be 24 or 36 with valid checksum)
 words = [w for _, w in seed]          # extract word strings
@@ -472,6 +514,7 @@ print(kdf_info())
 | `generate_words` | `generate_words(word_count=36, extra_entropy=None, language=None)` | `list[(int, str)]` — index/word pairs (last 2 are checksum) |
 | `verify_checksum` | `verify_checksum(seed)` | `bool` — True if last 2 words match expected checksum |
 | `get_private_key` | `get_private_key(seed, passphrase="")` | `bytes` — 64-byte master key (checksum verified & stripped) |
+| `get_profile` | `get_profile(master_key, profile_password)` | `bytes` — 64-byte profile key (instant HMAC, no KDF) |
 | `get_fingerprint` | `get_fingerprint(seed, passphrase="")` | `str` — 8-char hex (checksum stripped) |
 | `get_entropy_bits` | `get_entropy_bits(word_count, passphrase="")` | `float` — estimated total entropy |
 | `resolve` | `resolve(word_or_list, strict=False)` | `str` → `int \| None`; `list` → `(indexes, errors)` |
