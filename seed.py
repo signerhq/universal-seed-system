@@ -138,7 +138,10 @@ _ARGON2_HASHLEN = 64     # output bytes
 _PBKDF2_ITERATIONS = 600_000
 
 # ── Word lookup data ──────────────────────────────────────────────
-from words import LOOKUP as _LOOKUP, LANGUAGES as _LANGUAGES
+try:
+    from .words import LOOKUP as _LOOKUP, LANGUAGES as _LANGUAGES
+except ImportError:
+    from words import LOOKUP as _LOOKUP, LANGUAGES as _LANGUAGES
 
 _SORTED_KEYS = sorted(_LOOKUP.keys())
 _INDEX_TO_BASE = _BASE  # index -> base English word
