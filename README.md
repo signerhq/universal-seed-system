@@ -28,7 +28,7 @@
 
 <br>
 
-*Screenshots from the test app (`examples/universal.py`)*
+*Screenshots from signer's treasury app*
 
 <table>
 <tr>
