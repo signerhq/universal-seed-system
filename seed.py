@@ -1091,12 +1091,14 @@ def generate_quantum_keypair(master_key, algorithm="ml-dsa-65", key_index=0, _wo
 def get_fingerprint(seed, passphrase=""):
     """Compute a short visual fingerprint for verification.
 
-    Checksum words are stripped before computing — the fingerprint
-    depends only on the data words (and optional passphrase).
+    Derives the full master seed via get_seed() and returns
+    SHA-256(master_seed)[:4] as an 8-char uppercase hex string.
+    This ensures the fingerprint matches regardless of import format —
+    the same master key always produces the same fingerprint.
 
-    Without a passphrase this is instant (HMAC only).
-    With a passphrase it runs the full PBKDF2 + Argon2id pipeline
-    so the fingerprint reflects both the seed AND the passphrase.
+    Runs the full PBKDF2 + Argon2id pipeline (both with and without
+    passphrase), so this is NOT instant. Callers should run it in a
+    background thread.
 
     Args:
         seed: List of icon indexes (ints 0-255) or words (strings in any language).
@@ -1105,19 +1107,8 @@ def get_fingerprint(seed, passphrase=""):
     Returns:
         8-char uppercase hex string, e.g. "A3F1B2C4".
     """
-    indexes = _to_indexes(seed)
-    # Enforce valid length and strip checksum words
-    if len(indexes) not in (24, 36):
-        raise ValueError(f"seed must be 24 or 36 words, got {len(indexes)}")
-    data = indexes[:-2]
-    if passphrase:
-        key = get_seed(indexes, passphrase)  # full derivation — it strips internally
-    else:
-        payload = b""
-        for pos, idx in enumerate(data):
-            payload += struct.pack("<BB", pos, idx)
-        key = hmac.new(_DOMAIN, payload, hashlib.sha512).digest()
-    return key[:4].hex().upper()
+    key = get_seed(seed, passphrase)
+    return hashlib.sha256(key).hexdigest()[:8].upper()
 
 def get_entropy_bits(word_count, passphrase=""):
     """Calculate total entropy in bits from seed words + passphrase.

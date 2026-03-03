@@ -113,8 +113,8 @@
     "length_hex": 8,
     "length_bytes": 4,
     "format": "uppercase hex",
-    "without_passphrase": "first 4 bytes of HKDF-Extract PRK",
-    "with_passphrase": "first 4 bytes of full KDF output"
+    "derivation": "SHA-256(get_seed(words, passphrase))[0:4]",
+    "note": "Always runs full KDF pipeline; callers should use background thread"
   },
 
   "crypto": {

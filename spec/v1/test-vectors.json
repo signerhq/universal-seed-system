@@ -12,7 +12,7 @@
       "entropy_bits": 176,
       "checksum_valid": true,
       "prk_hex": "0fbfbbcbe6763d2395f3502ff2c4fc099caa2fbf0476dd0117696a9afb51e3d1996e4232da6c04f6bb2e346878487d101ebddaf15b6e8ea0c95f72cce4bf675f",
-      "fingerprint": "0FBFBBCB"
+      "fingerprint": "3F6FEE12"
     },
     {
       "id": "v1-max-24",
@@ -26,7 +26,7 @@
       "entropy_bits": 176,
       "checksum_valid": true,
       "prk_hex": "9ed761ca73bafc67db54977fefa7dc5c654af80352d34d17ffdb3daaee58748dda42bde0bb20196d2724ed6e51a3649b251036e4dcedf1a8be5cbc45b737c1e3",
-      "fingerprint": "9ED761CA"
+      "fingerprint": "9994D718"
     },
     {
       "id": "v1-sequential-24",
@@ -40,7 +40,7 @@
       "entropy_bits": 176,
       "checksum_valid": true,
       "prk_hex": "27cedb4e82c9121a8c30f3934dc9850093a2d943cf0a8e47b1e0971db401936611474e49da87bb8cbf076a91bd54f3bb144eda2f1d1a5d7ad5c530382d13c8fb",
-      "fingerprint": "27CEDB4E"
+      "fingerprint": "B3CCC927"
     },
     {
       "id": "v1-zeros-36",
@@ -54,7 +54,7 @@
       "entropy_bits": 272,
       "checksum_valid": true,
       "prk_hex": "10540986d690d9e859c908236894d1019f1d99151de0d611529f4e50613b2f32e7d9196c1cafe38119f27fa9628bf1b0861020998f35ac238b682cc36be402d3",
-      "fingerprint": "10540986"
+      "fingerprint": "CA3DC2FB"
     },
     {
       "id": "v1-max-36",
@@ -68,7 +68,7 @@
       "entropy_bits": 272,
       "checksum_valid": true,
       "prk_hex": "64fef49a962b9e33530b6065243138ca2f6826185751968701e52da21e45ba0a8278abf648e0a69a99857f3494ba0f952cc20d327974b5f6daf42785095989f9",
-      "fingerprint": "64FEF49A"
+      "fingerprint": "337192B3"
     },
     {
       "id": "v1-sequential-36",
@@ -82,7 +82,7 @@
       "entropy_bits": 272,
       "checksum_valid": true,
       "prk_hex": "b6354c3951a355dc5b889cd6e173bab0ddc00ac55a4972b7193ce35c4457ff7798f0270a5d60f25d56e534866ce2d568bf28a3638f49f0de700eeefc3188ef2b",
-      "fingerprint": "B6354C39"
+      "fingerprint": "0666BAA5"
     },
     {
       "id": "v1-zeros-24-passphrase",
@@ -96,7 +96,7 @@
       "entropy_bits": 176,
       "checksum_valid": true,
       "prk_hex": "a7cbb0889db03d9eba4e60c4c47ed1e3f1bde018e1a8cf98f24dbd46d8a61b1e9646c27e6595b8587c79a0c7d329aac5d89d47ad52da855f1dd6846ab9ea4cf1",
-      "fingerprint": null
+      "fingerprint": "A7788080"
     },
     {
       "id": "v1-zeros-36-unicode-pass",
@@ -111,7 +111,7 @@
       "entropy_bits": 272,
       "checksum_valid": true,
       "prk_hex": "923e7244283471f1eb735f1bb7645a1eb91f2b03b017303762c4f621a727517f5ff341908ffa7819a9b1e6fe6a4fc410afb961826cd18c2a3389adfcc3f0a9b0",
-      "fingerprint": null
+      "fingerprint": "B5B1D58D"
     },
     {
       "id": "v1-mixed-24",
@@ -125,7 +125,7 @@
       "entropy_bits": 176,
       "checksum_valid": true,
       "prk_hex": "44d17acf35eb759887da7246cb530b9baefdc5e9c77a8f5f32f7d28992479283214b4f2498c20c31ed675b8fe42eae11d0728490fb23c2c1382b814279e1da05",
-      "fingerprint": "44D17ACF"
+      "fingerprint": "5825B5A8"
     },
     {
       "id": "v1-mixed-36-passphrase",
@@ -139,7 +139,7 @@
       "entropy_bits": 272,
       "checksum_valid": true,
       "prk_hex": "fe7b1fd3e27fa4d5cc5fbf828f9f6ff35b55a87b1ad784d2e0c0f6f69e82650ad1e5c30c8dba19d3185015aafec148d9511eb3f69643a71219b5cbe584e3f7a7",
-      "fingerprint": null
+      "fingerprint": "FD5FAAA4"
     },
     {
       "id": "v1-bad-checksum",
@@ -166,7 +166,7 @@
       "entropy_bits": 176,
       "checksum_valid": true,
       "prk_hex": "0fbfbbcbe6763d2395f3502ff2c4fc099caa2fbf0476dd0117696a9afb51e3d1996e4232da6c04f6bb2e346878487d101ebddaf15b6e8ea0c95f72cce4bf675f",
-      "fingerprint": "0FBFBBCB",
+      "fingerprint": "3F6FEE12",
       "note": "PRK and fingerprint must match v1-zeros-24 exactly"
     }
   ],

@@ -240,21 +240,12 @@ SS   = HMAC-SHA256(PRK, info)
 
 ## Fingerprint Verification
 
-To verify you've recovered correctly, compute the fingerprint:
+To verify you've recovered correctly, compute the fingerprint from the
+master seed (always runs full KDF):
 
-**Without passphrase** (instant — uses HKDF-Extract only):
 ```python
-payload = b""
-for pos, idx in enumerate(data_indexes):
-    payload += struct.pack("<BB", pos, idx)
-prk = HMAC-SHA512(key=b"universal-seed-v1", message=payload)
-fingerprint = prk[0:4].hex().upper()   # e.g. "0FBFBBCB"
-```
-
-**With passphrase** (runs full KDF):
-```python
-master_key = ...  # full recovery from Steps 4–9
-fingerprint = master_key[0:4].hex().upper()
+master_key = get_seed(full_seed, passphrase)  # full recovery (Steps 4-9)
+fingerprint = SHA-256(master_key)[0:4].hex().upper()  # e.g. "3F6FEE12"
 ```
 
 Compare this fingerprint against your saved fingerprint. If it matches, recovery
@@ -297,7 +288,7 @@ PRK (HKDF-Extract only):
   0fbfbbcbe6763d2395f3502ff2c4fc099caa2fbf0476dd0117696a9afb51e3d1
   996e4232da6c04f6bb2e346878487d101ebddaf15b6e8ea0c95f72cce4bf675f
 
-Fingerprint: 0FBFBBCB
+Fingerprint: 3F6FEE12
 ```
 
 See `test-vectors.json` for the full set of test vectors including quantum key derivation.

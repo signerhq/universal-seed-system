@@ -1399,8 +1399,6 @@ class SeedTestWindow(QMainWindow):
                 self.profile_row_widget.hide()
                 return
             pp = self.passphrase_input.text()
-            # Fast fingerprint (HMAC only, no passphrase — instant)
-            fp = get_fingerprint(indexes)
             bits = get_entropy_bits(self.word_count, pp)
             bits_str = f"{bits:.0f}-bit entropy" if bits == int(bits) else f"~{bits:.0f}-bit entropy"
             self.count_label.setStyleSheet(
@@ -1417,7 +1415,8 @@ class SeedTestWindow(QMainWindow):
                 "color: #2a9a5a; font-size: 11px; font-weight: 600;"
                 " border: none; background: none;"
             )
-            self.fp_label.setText(fp)
+            # Fingerprint computed in background via _derive_key → _on_key_ready
+            self.fp_label.setText("--------")
             self.fp_label.setStyleSheet(
                 "color: #2a9a5a; font-size: 15px; font-weight: 700;"
                 " font-family: monospace; letter-spacing: 3px;"
@@ -1483,8 +1482,9 @@ class SeedTestWindow(QMainWindow):
         self._key_deriving = True
         version = self._key_version
         def _derive():
+            import hashlib
             key_bytes = get_seed(idxs, pp)
-            fp2 = get_fingerprint(idxs, pp)
+            fp2 = hashlib.sha256(key_bytes).hexdigest()[:8].upper()
             self._key_deriving = False
             if self._key_version == version:
                 self._key_ready.emit(key_bytes.hex(), fp2)

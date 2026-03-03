@@ -290,24 +290,24 @@ def get_profile(master_key, profile_password):
 
 ## 8. Fingerprint
 
-**Without passphrase** (instant):
+The fingerprint is always derived from the full master seed via SHA-256.
+This ensures the same master key produces the same fingerprint regardless
+of import format (mnemonic, hex, etc.).
+
 ```python
-payload = positional_payload(data_indexes)  # checksum already stripped
-key = HMAC-SHA512(key=b"universal-seed-v1", message=payload)
-fingerprint = key[0:4].hex().upper()   # 8-char hex, e.g. "0FBFBBCB"
+master_seed = get_seed(full_seed, passphrase)  # full KDF pipeline
+fingerprint = SHA-256(master_seed)[0:4].hex().upper()  # e.g. "3F6FEE12"
 ```
 
-**With passphrase** (runs full KDF):
-```python
-key = get_seed(full_seed, passphrase)  # verifies + strips checksum internally
-fingerprint = key[0:4].hex().upper()
-```
+Because the full PBKDF2 + Argon2id pipeline runs for every fingerprint
+computation (with or without passphrase), callers should run this in a
+background thread.
 
 | Property | Value |
 |:---|:---|
 | Length | 8 hex characters (4 bytes = 32 bits) |
-| Format | Uppercase hex, e.g. `"0FBFBBCB"` |
-| Derived from | Data indexes only (checksum stripped) |
+| Format | Uppercase hex, e.g. `"3F6FEE12"` |
+| Derived from | SHA-256 of full master seed (via get_seed) |
 
 ---
 
@@ -605,6 +605,6 @@ v1 provides two independent verification signals:
 | Signal | Bits | Derived from | When available |
 |:---|:---:|:---|:---|
 | Checksum (last 2 words) | 16 | Data indexes via HMAC-SHA-256 | Always (built into seed) |
-| Fingerprint | 32 | Data indexes via HMAC-SHA-512 (or full KDF with passphrase) | After resolution |
+| Fingerprint | 32 | SHA-256 of full master seed (always runs KDF) | After resolution |
 
 Both MUST be specified and implemented. The fingerprint changes with passphrase; the checksum does not.
